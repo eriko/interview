@@ -40,12 +40,11 @@
 
         // Fecha de comienzo (Día/Mes/Año/Hora/Minuto)
         $mform->addElement('date_time_selector', 'timeopen', get_string('timeopen', 'interview'));
-        $mform->setHelpButton('timeopen', array('duration', get_string('duration', 'interview'), 'interview'));
+        $mform->addHelpButton('timeopen', 'duration', 'interview');
 
         // Fecha de finalización (Día/Mes/Año/Hora/Minuto)
         $mform->addElement('date_time_selector', 'timeclose', get_string('timeclose', 'interview'));
-        $mform->setHelpButton('timeclose', array('duration', get_string('duration', 'interview'), 'interview'));
-
+        $mform->addHelpButton('timeclose', 'duration', 'interview');
         // Cabecera: Franjas horarias
         $mform->addElement('header', 'slots', get_string('slots', 'interview'));
 
@@ -69,7 +68,7 @@
 		$mform->addElement('text', 'timeslot', get_string('timeslot','interview'),'maxlength="3"');
         $mform->setType('timeslot', PARAM_INT);
         $mform->addRule('timeslot', null, 'required', null, 'client');
-		$mform->setHelpButton('timeslot', array('duration', get_string('duration', 'interview'), 'interview'));
+		$mform->addHelpButton('timeslot', 'duration', 'interview');
 
 //-------------------------------------------------------------------------------
 // Establece el lugar de la cita y el profesor al mando

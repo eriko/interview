@@ -32,9 +32,10 @@
  */
 
 
-$mod_interview_capabilities = array(
+$capabilities = array(
 
     // Elección
+	//Select slot
     'mod/interview:choose' => array(
 
         'captype' => 'write',
@@ -45,6 +46,7 @@ $mod_interview_capabilities = array(
     ),
 
     // Cambio de franja
+	// Change selected slot
     'mod/interview:change' => array(
 
         'captype' => 'write',
@@ -55,6 +57,21 @@ $mod_interview_capabilities = array(
     ),
 
 	// Borrar franjas temporales
+	// Delete slot
+    'mod/interview:edit' => array(
+
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'legacy' => array(
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+            'admin' => CAP_ALLOW
+        )
+    ),
+
+	// Borrar franjas temporales
+	// Delete slot
     'mod/interview:deleteslots' => array(
 
         'captype' => 'write',
@@ -67,6 +84,7 @@ $mod_interview_capabilities = array(
     ),
 
     // Liberar franjas temporales
+	// Release a slot select by a student
     'mod/interview:freeslots' => array(
 
         'captype' => 'write',
@@ -79,6 +97,7 @@ $mod_interview_capabilities = array(
     ),
 
     // Asignar franjas temporales
+	// Assign a slot to a student
     'mod/interview:assignslot' => array(
 
         'captype' => 'write',
@@ -91,6 +110,7 @@ $mod_interview_capabilities = array(
     ),
 
 	// Tomar notas
+	//take note on a student
     'mod/interview:takenotes' => array(
 
         'captype' => 'write',
@@ -103,6 +123,7 @@ $mod_interview_capabilities = array(
     ),
 
     // Modificar notas
+	//modify the notes on a student
     'mod/interview:modifynotes' => array(
 
         'captype' => 'write',

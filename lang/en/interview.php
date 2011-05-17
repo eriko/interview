@@ -4,7 +4,9 @@
  * Este archivo php contiene todos los strings utilizados en el
  * módulo traducidos al idioma Inglés
  */
-
+$string['modulename'] = 'Personal interview';
+$string['pluginname'] = 'Personal interview';
+$string['modulenameplural'] = 'Personal interviews';
 $string['action'] = 'Action';
 $string['accept'] = 'Accept';
 $string['addnote'] = 'Add note';
@@ -42,8 +44,6 @@ $string['missingstudent'] = '1 student still needs to make an appointment';
 $string['missingstudents'] = '$a students still need to make an appointment';
 $string['modify'] = 'Modify Note';
 $string['modifynote'] = 'Modify Note';
-$string['modulename'] = 'Personal interview';
-$string['modulenameplural'] = 'Personal interviews';
 $string['mustchooseone'] = 'You must choose a time-slot before saving. Nothing was saved';
 $string['name'] = 'Name';
 $string['nointerviews'] = 'There are no interviews';
@@ -98,5 +98,9 @@ $string['updatewarning'] = 'When updating a Interview activity you will be unabl
 $string['updating'] = 'Updating. Please wait';
 $string['viewnote'] = 'View note';
 $string['yourselection'] = 'Your choice';
-
+$string['duration_help'] = '<h1>temporary slot</h1>';
+$string['starttime_help'] = 'The date and time of the first session';
+$string['endtime_help'] = 'The date and time of the end of the last session';
+$string['timeblock_help'] = 'There are 4 time blocks ';
+$string['minutes_help'] = 'test';
 ?>

@@ -32,17 +32,17 @@ function xmldb_interview_upgrade($oldversion=0) {
 ///     $result = result of "/lib/ddllib.php" function calls
 /// }
 
-    if ($result && $oldversion < 2009121100) {
-
-    /// Define field timemodified to be added to forum_queue
-        $table = new XMLDBTable('interview');
-        $field = new XMLDBField('timeblock');
-        $field->setAttributes(XMLDB_TYPE_INTEGER, '10', XMLDB_SIGNED, XMLDB_NOTNULL, null, null, null, '0', 'description');
-
-
-    /// Launch add field timemodified
-        $result = $result && add_field($table, $field);
-    }
+//    if ($result && $oldversion < 2009121100) {
+//
+//    /// Define field timemodified to be added to forum_queue
+//        $table = new XMLDBTable('interview');
+//        $field = new XMLDBField('timeblock');
+//        $field->setAttributes(XMLDB_TYPE_INTEGER, '10', XMLDB_SIGNED, XMLDB_NOTNULL, null, null, null, '0', 'description');
+//
+//
+//    /// Launch add field timemodified
+//        $result = $result && add_field($table, $field);
+//    }
 
     return $result;
 }
