@@ -80,14 +80,12 @@ if ($course->category) {
 
 // Muestra la cabecera
 //$OUTPUT->header();
-//$PAGE->set_title(format_string($interview->name));
-//$PAGE->set_heading( "<a href=\"index.php?id=$course->id\">$strinterviews</a> -> ".format_string($interview->name));
 //$PAGE->set_button($OUTPUT->update_module_button($cm->id, $course->id, $strinterview));
 
 //	(format_string($interview->name), '',
 //"<a href=\"index.php?id=$course->id\">$strinterviews</a> -> ".format_string($interview->name),
 //"", "", true, update_module_button($cm->id, $course->id, $strinterview), navmenu($course, $cm));
-
+view_header($interview,$course,$cm);
 
 // Take the context of the instance, if there isn't one create it
 $context = get_context_instance(CONTEXT_MODULE, $cm->id);
@@ -114,32 +112,12 @@ switch ($action) {
 
 	// Action: Erases string
 	case 'deleteslot':
-		deletslot($course);
+		deleteslot($course,$cm);
 		break;
 
 	//Action: frees the string
 	case 'freeslot' :
 		freeslot($course);
-		break;
-
-	//Action: makes note
-	case 'takedown' :
-		takenote($course);
-		break;
-
-	// Action: Saves the note
-	case 'savenote':
-		savenoet($course);
-		break;
-
-	// Action: Modifies the note
-	case 'modify':
-		modifynote($course);
-		break;
-
-	// Action: changes the string
-	case 'change' :
-		modifynote($course);
 		break;
 
 }
@@ -151,10 +129,12 @@ switch ($action) {
 
 // If the actual user is a professor
 
-if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $course->id), $USER->id)) {
+$context = get_context_instance(CONTEXT_MODULE, $cm->id);
+
+if (has_capability('mod/interview:edit',$context, $USER->id)) {
 	echo '<H2>Is faculty</H2>';
 }
-elseif (has_capability('mod/interview:choose', get_context_instance(CONTEXT_COURSE, $course->id), $USER->id)) {
+elseif (has_capability('mod/interview:choose', $context, $USER->id)) {
 	echo '<H2>Is student</H2>';
 }
 
@@ -162,9 +142,9 @@ elseif (has_capability('mod/interview:choose', get_context_instance(CONTEXT_COUR
 if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $course->id), $USER->id)) {
 
 	// Shows the name of the instance in header format
-	$pg_heading = ($interview->name, 'center');
+	$pg_heading = ($interview->name);
 
-	view_description();
+	view_description($interview);
 
 
 	/************** TABLA 1 **************/
@@ -172,18 +152,16 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 	/************** TABLE 1 **************/
 	/*************************************/
 
-	$fac_slots_table = build_fac_slots_table($interview);
+	$fac_slots_table = build_fac_slots_table($interview,$cm);
 	// T’tulo de la tabla
 	// Title of the table
-	$tb1_heading = (get_string('slots', 'interview'), 'center');
+	$tb1_heading = (get_string('slots', 'interview'));
 
-	// Muestra la tabla centrada en la pantalla
 	// shows the table centered on the screen
 	echo '<center>';
-	print_table($slots_table);
+	echo html_writer::table($fac_slots_table);
 	echo '</center>';
 
-	// Proporciona links para descargarse las hojas de c‡lculo
 	// Provides links to download the calculation pages
 	echo "<br />\n";
 	echo "<table class=\"downloadreport\" align=\"center\"><tr>\n";
@@ -191,13 +169,13 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 	$options = array();
 	$options["id"] = "$cm->id";
 	$options["download"] = "ods";
-	print_single_button("report.php", $options, get_string('downloadods'));
+	$OUTPUT->single_button("report.php", get_string('downloadods'), 'post', $options);
 	echo "</td><td>";
 	$options["download"] = "xls";
-	print_single_button("report.php", $options, get_string('downloadexcel'));
+	$OUTPUT->single_button("report.php", get_string('downloadexcel'), 'post', $options);
 	echo "</td><td>";
 	$options["download"] = "txt";
-	print_single_button("report.php", $options, get_string('downloadtext'));
+	$OUTPUT->single_button("report.php", get_string('downloadtext'), 'post', $options);
 	echo "</td></tr></table>";
 	echo '<br /><br />';
 
@@ -205,161 +183,20 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 	/************** TABLE 2 **************/
 	/*************************************/
 
-
+	$stu_list_table = build_facstu_list_table($interview,$cm,$course);
 	// collects the students in the course
-	$students = get_course_students($course->id, $sort = "u.lastname", $dir = "ASC");
-
-
-	// If there are no students, will notify
-	if (!$students) {
-		notify(get_string('noexistingstudents'));
-
-		// If there are students, creates a table with the users
-		// that have not picked a horary string
-	} else {
-
-
-		// Defines the headings and alignments in the table of students
-		$mtable->head = array($strphoto, $strstudent, $stremail); //, $straction);
-		$mtable->align = array('CENTER', 'CENTER', 'CENTER'); //, 'CENTER');
-		$mtable->width = array('', '', '', '');
-
-
-		// Begins the link to send mail to all the
-		// students that have not picked a string
-		$mailto = '<a href="mailto:';
-
-		// Para cada uno de los estudiantes
-		// For each of the students
-		foreach ($students as $student) {
-
-
-			// If a relationship that complies with the restrictions does not exist
-			if (!record_exists('interview_slots', 'student', $student->id, 'interviewid', $interview->id)) {
-
-
-				// Shows the user image
-				$picture = print_user_picture($student->id, $course->id, $student->picture, false, true);
-
-
-				// Shows the full name in link format
-				$name = "<a href=\"../../user/view.php?id=$student->id&amp;course=$interview->course\">" . fullname($student) . "</a>";
-
-
-				// Creates a link to the mailto list for the user
-				$email = obfuscate_mailto($student->email);
-
-
-				// Incorporates the email of the student
-				$mailto .= $student->email . ', ';
-
-
-				//$slots =$DB->get_records('interview_slots', 'interviewid', $interview->id, 'id');
-				// Compiles the temporary strings organized by id
-
-
-				// For each one, if assigned to a student
-				// passes to the next iteration of foreach
-				//foreach ($slots as $slot) {
-				//	if ($slot->student != 0) {
-				//		continue;
-				//	}
-				//}
-
-
-				// If the temporary strings are not empty
-				//if (!empty($slots)) {
-
-
-				// Creates an array
-				//	$choices = array();
-
-
-				// For each one, if a student is not assigned,
-				// fills in the array with the horary strings
-				//	foreach($slots as $slot) {
-				//		if ($slot->student == 0) {
-				//			$choices[$slot->id] = userdate($slot->start,  get_string('strftimetime')). ' - ' .userdate($slot->ending,  get_string('strftimetime'));
-				//		}
-				//	}
-
-
-				// It creates the iteration menus with the availiable times
-				//	$actions = "<form name=\"form".$student->id."\">";
-				//	$actions .= choose_from_menu($choices, 'slotforstudent', '', 'choose', 'asignacion('.$cm->id.','.$student->id.',form'.$student->id.')', '0', true);
-				//	$actions .= "</form>";
-
-
-				// las acciones tambiŽn lo est‡n
-				// If the temporary strings are empty
-				// the actions are empty as well
-				//} else {
-				//	$actions = '';
-				//}
-
-
-				// Inserts the data in the table
-				$mtable->data[] = array($picture, $name, $email); //, $actions);
-			}
-		}
-	}
 
 	// Counts the elements of the array
-	$numm = count($mtable->data);
-
+	$numm = count($stu_list_table->data);
 
 
 	// If there is data in the table that indicates that a studnet
-	// has not picked a horary string
+	// has not picked a slot
 	if ($numm > 0) {
-
-
-		// Shows the number of students that have not picked
-		if ($numm == 1) {
-			$heading = (get_string('missingstudent', 'interview'), 'center');
-		} elseif ($numm > 1) {
-			$heading = (get_string('missingstudents', 'interview', $numm), 'center');
-		}
-
-		// Creates the links to send invitations or reminders
-		$strinvitation = get_string('invitation', 'interview');
-		$strreminder = get_string('reminder', 'interview');
-
-		// Eliminates the blank space and the final coma of $mailto
-		$mailto = rtrim($mailto, ', ');
-
-		// Invitation:
-		// Specifies the topic of the email
-		$subject = $strinvitation . ': ' . $interview->name;
-
-		// Specifies the body of the message
-		$body = "$strinvitation: $interview->name\n\n" .
-				get_string('invitationtext', 'interview') .
-				"{$CFG->wwwroot}/mod/interview/view.php?id=$cm->id";
-
-		// Establishes the complete text to send
-		echo '<center>' . get_string('composeemail', 'interview') .
-				$mailto . '?subject=' . htmlentities(rawurlencode($subject)) .
-				'&amp;body=' . htmlentities(rawurlencode($body)) .
-				'"> ' . $strinvitation . '</a> ';
-
-		// Reminder:
-		// Establishes the topic of the email
-		$subject = $strreminder . ': ' . $interview->name;
-
-		// Establishes the body of the message
-		$body = "$strreminder: $interview->name\n\n" .
-				get_string('remindertext', 'interview') .
-				"{$CFG->wwwroot}/mod/interview/view.php?id=$cm->id";
-
-		// Establishes the complete text to send
-		echo $mailto . '?subject=' . htmlentities(rawurlencode($subject)) .
-				'&amp;body=' . htmlentities(rawurlencode($body)) .
-				'"> ' . $strreminder . '</a></center><br />';
 
 		// Shows the table of students centered in the screen
 		echo '<center>';
-		print_table($mtable);
+		echo html_writer::table($stu_list_table);
 		echo '</center>';
 	}
 
@@ -370,7 +207,7 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 } elseif (has_capability('mod/interview:choose', get_context_instance(CONTEXT_COURSE, $course->id), $USER->id)) {
 
 	// Shows the name of the instance formed in the header
-	$heading = ($interview->name, 'center');
+	$heading = ($interview->name);
 
 	// Muestra la descripci—n en un cuadro
 	// Shows the description in a square
@@ -466,13 +303,13 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 
 	// If the strings have been self erasing because the interview has expired
 	if (empty($slots) and $interview->timeclose) {
-		$heading = (get_string('expire', 'interview'), 'center');
+		$heading = (get_string('expire', 'interview'));
 
 		// If not, shows the table centered on the screen
 	} else {
 
 		// title of the table
-		$heading = (get_string('slots', 'interview'), 'center');
+		$heading = (get_string('slots', 'interview'));
 		echo '<center>';
 		print_table($table);
 		echo '</center>';
@@ -480,6 +317,6 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 	}
 }
 // Shows the footer of the page
-$OUTPUT->footer($course);
+$OUTPUT->footer();
 ?>
 
