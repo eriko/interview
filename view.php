@@ -5,7 +5,7 @@
  * specific to the model personal interview
  *  */
 
-  // It includes the specific files
+// It includes the specific files
 require_once("../../config.php");
 require_once("lib.php");
 
@@ -78,15 +78,6 @@ if ($course->category) {
 	$navigation = '';
 }
 
-// Muestra la cabecera
-//$OUTPUT->header();
-//$PAGE->set_button($OUTPUT->update_module_button($cm->id, $course->id, $strinterview));
-
-//	(format_string($interview->name), '',
-//"<a href=\"index.php?id=$course->id\">$strinterviews</a> -> ".format_string($interview->name),
-//"", "", true, update_module_button($cm->id, $course->id, $strinterview), navmenu($course, $cm));
-view_header($interview,$course,$cm);
-
 // Take the context of the instance, if there isn't one create it
 $context = get_context_instance(CONTEXT_MODULE, $cm->id);
 
@@ -100,29 +91,49 @@ echo '<br/>';
 // Actions possible to carry out
 switch ($action) {
 
-	// Action: Elect a temporary string
+	// Action: select a temporary slot
 	case 'mine':
-		select($course);
+		select($course,$cm);
 		break;
 
-	// Action: Assign an student a temporary string
+	// Action: Assign an student a time slot
 	case 'assign':
-		assign($course);
+		assign($course,$cm);
 		break;
 
-	// Action: Erases string
-	case 'deleteslot':
-		deleteslot($course,$cm);
+	// Action: release your time slot
+	case 'release':
+		release($course,$cm);
+		break;
+
+	// Action: Hides slot
+	case 'hideslot':
+		hideslot($course, $cm, $interview);
+		break;
+
+	// Action: unhides slot
+	case 'unhideslot':
+		unhideslot($course, $cm, $interview);
 		break;
 
 	//Action: frees the string
 	case 'freeslot' :
-		freeslot($course);
+		freeslot($course,$cm);
 		break;
 
 }
 // End of the actions
 
+//start laying out the page
+// Muestra la cabecera
+//$OUTPUT->header();
+//$PAGE->set_button($OUTPUT->update_module_button($cm->id, $course->id, $strinterview));
+
+//	(format_string($interview->name), '',
+//"<a href=\"index.php?id=$course->id\">$strinterviews</a> -> ".format_string($interview->name),
+//"", "", true, update_module_button($cm->id, $course->id, $strinterview), navmenu($course, $cm));
+
+view_header($interview, $course, $cm);
 
 /************************************* PROFESSOR ***********************************/
 /***********************************************************************************/
@@ -131,7 +142,7 @@ switch ($action) {
 
 $context = get_context_instance(CONTEXT_MODULE, $cm->id);
 
-if (has_capability('mod/interview:edit',$context, $USER->id)) {
+if (has_capability('mod/interview:edit', $context, $USER->id)) {
 	echo '<H2>Is faculty</H2>';
 }
 elseif (has_capability('mod/interview:choose', $context, $USER->id)) {
@@ -152,7 +163,7 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 	/************** TABLE 1 **************/
 	/*************************************/
 
-	$fac_slots_table = build_fac_slots_table($interview,$cm);
+	$fac_slots_table = build_fac_slots_table($interview, $cm);
 	// T’tulo de la tabla
 	// Title of the table
 	$tb1_heading = (get_string('slots', 'interview'));
@@ -169,13 +180,13 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 	$options = array();
 	$options["id"] = "$cm->id";
 	$options["download"] = "ods";
-	$OUTPUT->single_button("report.php", get_string('downloadods'), 'post', $options);
+	echo $OUTPUT->single_button("report.php", get_string('downloadods'), 'post', $options);
 	echo "</td><td>";
 	$options["download"] = "xls";
-	$OUTPUT->single_button("report.php", get_string('downloadexcel'), 'post', $options);
+	echo $OUTPUT->single_button("report.php", get_string('downloadexcel'), 'post', $options);
 	echo "</td><td>";
 	$options["download"] = "txt";
-	$OUTPUT->single_button("report.php", get_string('downloadtext'), 'post', $options);
+	echo $OUTPUT->single_button("report.php", get_string('downloadtext'), 'post', $options);
 	echo "</td></tr></table>";
 	echo '<br /><br />';
 
@@ -183,7 +194,7 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 	/************** TABLE 2 **************/
 	/*************************************/
 
-	$stu_list_table = build_facstu_list_table($interview,$cm,$course);
+	$stu_list_table = build_facstu_list_table($interview, $cm, $course);
 	// collects the students in the course
 
 	// Counts the elements of the array
@@ -208,19 +219,34 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 
 	// Shows the name of the instance formed in the header
 	$heading = ($interview->name);
+	$stu_own_slot = build_stu_own_slots_table($interview, $cm);
+	if ($stu_own_slot != null) {
+		$OUTPUT->box_start('center');
+		echo $stu_own_slot;
+		$OUTPUT->box_end();
+	}
 
-	// Muestra la descripci—n en un cuadro
+ 	//if ($stu_own_slot = null) {
+	$stu_slots_table = build_stu_slots_table($interview, $cm);
+	echo '<center>';
+	echo html_writer::table($stu_slots_table);
+	echo '</center>';
+	//}
+	
 	// Shows the description in a square
 	if ($interview->description) {
 		echo '<center>';
-		print_simple_box(format_text($interview->description), 'center', '', '#eee');
+		$OUTPUT->box_start( 'center', '', '#eee');
+		echo format_text($interview->description);
+
+		$OUTPUT->box_end();
 		echo '</center>';
 	}
 
 	// If a place or professor has been established, is shown in another square
 	if ($interview->location or $interview->teacher) {
 		echo '<center>';
-		print_simple_box_start('center', '', '#eee');
+		$OUTPUT->box_start('center', '', '#eee');
 		if (!empty($interview->location)) {
 			echo '<b>';
 			echo get_string('location', 'interview');
@@ -235,72 +261,8 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 			echo ': ' . $interview->teacher;
 		}
 		echo '</center>';
-		print_simple_box_end();
+		$OUTPUT->box_end();
 	}
-
-	// Compiles the temporary strings ordered by id
-	$slots = get_records('interview_slots', 'interviewid', $interview->id, 'id');
-
-	// Defines the headers and the alignment on the table Horary Strings
-	$table->head = array($strdate, $strstart, $strend, $strchoose);
-	$table->align = array('CENTER', 'CENTER', 'CENTER', 'CENTER');
-	$table->width = array('', '', '', '');
-
-	// For each of the temporary strings
-	foreach ($slots as $slot) {
-
-		// If a student is not assigned and their time has passed,
-		// it's erased and goes on to the next iteration of foreach
-		if ($slot->student == 0 and $slot->ending < time()) {
-			delete_records('interview_slots', 'id', $slot->id);
-			continue;
-		}
-
-		// If the user already has an assigned temporary string
-		if ($slot->student == $USER->id) {
-
-			// Establishes the form that shows the data of the choice
-			$starttime = userdate($slot->start, get_string('strftimetime'));
-			$endtime = userdate($slot->ending, get_string('strftimetime'));
-			$startdate = userdate($slot->start, get_string('strftimedateshort'));
-
-			// square of text were the choice is shown
-			print_simple_box_start('center');
-			echo '<center>';
-			echo '<b>';
-			echo format_text(get_string('yourselection', 'interview'));
-			echo '</b>';
-			echo format_text(get_string('date', 'interview') . ': ' . $startdate);
-			echo format_text(get_string('hour', 'interview') . ': ' . $starttime . ' - ' . $endtime);
-
-			// Provides the option to change the selected string
-			echo "[<a href=\"view.php?action=change&amp;id=$cm->id&amp;slotid=$slot->id\">" . get_string('change', 'interview') . '</a>]';
-			echo '</center>';
-			print_simple_box_end();
-		}
-
-		// Does not show the temporary strings that have been
-		// assigned to another student
-		if ($slot->student != 0) {
-			continue;
-		}
-
-		// defines the form that shows the date of the session
-		$starttime = userdate($slot->start, get_string('strftimetime'));
-		$endtime = userdate($slot->ending, get_string('strftimetime'));
-		$startdate = userdate($interview->timeopen, get_string('strftimedateshort'));
-
-		// establishes the link for the action
-		$actions = '<span style="font-size: x-small;">';
-
-		// Action to pick a temporary string
-		$actions .= "[<a href=\"view.php?action=mine&amp;id=$cm->id&amp;interviewid=$interview->id&amp;slotid=$slot->id\">" . get_string('assign', 'interview') . '</a>]';
-		$actions .= '</span>';
-
-		// Inserts the data in the table
-		$table->data[] = array($startdate, $starttime, $endtime, $actions);
-	}
-
 	// If the strings have been self erasing because the interview has expired
 	if (empty($slots) and $interview->timeclose) {
 		$heading = (get_string('expire', 'interview'));

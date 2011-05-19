@@ -222,9 +222,9 @@ function interview_update_instance($interview) {
  */
 
 function interview_delete_instance($id) {
-
+	global $DB;
 	// Compile the primary relationship of the interview table that fulfills the restriction
-	$interview = get_record('interview', 'id', $id);
+	$interview = $DB->get_record('interview',array( 'id'=> $id));
 
 	// If there is no relationship in the table that has the id you're looking for return false
 	if (!$interview) {
@@ -236,11 +236,11 @@ function interview_delete_instance($id) {
 
 	// Eliminate whatever relationship dependant on the previous, if in any moment
 	// something fails, $result becomes false
-	if (!delete_records('interview', 'id', $interview->id)) {
+	if (!$DB->delete_records('interview', array('id'=> $interview->id))) {
 		$result = false;
 	}
 
-	if (!delete_records('interview_slots', 'interviewid', $interview->id)) {
+	if (!$DB->delete_records('interview_slots', array('interviewid'=> $interview->id))) {
 		$result = false;
 	}
 
@@ -248,9 +248,9 @@ function interview_delete_instance($id) {
 	return $result;
 }
 
-function select($course) {
+function select($course,$cm) {
 
-	global $USER;
+	global $USER,$DB;
 
 	// It picks up the necessary variables
 	$id = required_param('id', PARAM_INT);
@@ -265,7 +265,7 @@ function select($course) {
 	}
 
 	// compiles the selected temporary string
-	$chosenslot = $DB->get_record('interview_slots', 'id', $slotid);
+	$chosenslot = $DB->get_record('interview_slots',array('id'=> $slotid));
 
 	// If fails returns error
 	if (!$chosenslot) {
@@ -274,7 +274,7 @@ function select($course) {
 
 
 	// Compiles all the temporary strings
-	$slots = get_records('interview_slots', 'interviewid', $interviewid, 'id');
+	$slots = $DB->get_records('interview_slots',array('interviewid'=> $interviewid));
 
 	// For each one
 	foreach ($slots as $slot) {
@@ -293,15 +293,16 @@ function select($course) {
 
 
 	// Actualizes the string. If it's not possible, returns error
-	if (!update_record('interview_slots', $chosenslot)) {
+	if (!$DB->update_record('interview_slots', $chosenslot)) {
 		print_error(get_string('notsaved', 'interview'));
 	}
 
 	// It's used to control the recent activity carried out by the user
-	add_to_log($course->id, "interview", "choose", "view.php?id=$cm->id", "$interview->id");
+	add_to_log($course->id, "interview", "choose", "view.php?id=$cm->id", "$interviewid");
 }
 
-function assign($course) {
+function assign($course,$cm) {
+	global $DB;
 	// It picks up the necessary variables
 	$id = required_param('id', PARAM_INT);
 	$slotid = required_param('slotid', PARAM_INT);
@@ -314,8 +315,8 @@ function assign($course) {
 		notice(get_string('notselected', 'interview'), "view.php?id=$cm->id");
 	}
 
-	// Compiles the selected temporary string
-	$slot = $DB->get_record('interview_slots', 'id', $slotid);
+	// Compiles the selected empty slot
+	$slot = $DB->get_record('interview_slots', array('id'=> $slotid));
 
 	// If fails returns error
 	if (!$slot) {
@@ -328,7 +329,7 @@ function assign($course) {
 		$slot->timemodified = time();
 
 		// Actualizes the string. If it's not possible, returns error
-		if (!update_record('interview_slots', $slot)) {
+		if (!$DB->update_record('interview_slots', $slot)) {
 			print_error(get_string('notassign', 'interview'));
 		}
 
@@ -337,32 +338,60 @@ function assign($course) {
 	}
 }
 
-function deleteslot($course,$cm) {
+function hideslot($course, $cm, $interview) {
 	global $DB;
 
 	// Picks up the necessary parameters
 	$id = required_param('id', PARAM_INT);
 	$slotid = required_param('slotid', PARAM_INT);
 
-	// It erases the seleted string. If all goes well, it addresses
-	// to the user. If not, returns error
-	if (!$DB->delete_records('interview_slots', array('id' => $slotid))) {
-		error(get_string('notdeleted', 'interview'));
-	} else {
-		redirect("view.php?id=$cm->id", get_string('deleting', 'interview'));
-	}
+	// Compiles the selected empty slot
+	$slot = $DB->get_record('interview_slots', array('id' => $slotid));
 
-	//Controls the recent activity done by the users
-	add_to_log($course->id, "interview", "deleteslot", "view.php?id=$cm->id", $interview->id, $cm->id);
+	//free the slot if it has already been selcted
+	if ($slot->student == null) {
+		$stot->student = null;
+	}
+	//hide the slot
+	$slot->available = false;
+	$slot->timemodified = time();
+
+	$DB->update_record('interview_slots', $slot);
+	add_to_log($course->id, "interview", "hideslot", "view.php?id=$cm->id", $interview->id, $cm->id);
+
+
 }
 
-function freeslot($course) {
+function unhideslot($course, $cm, $interview) {
+	global $DB;
 
+	// Picks up the necessary parameters
+	$id = required_param('id', PARAM_INT);
+	$slotid = required_param('slotid', PARAM_INT);
+
+	// Compiles the selected empty slot
+	$slot = $DB->get_record('interview_slots', array('id' => $slotid));
+
+	//make it unhide
+	$slot->available = true;
+	$slot->timemodified = time();
+
+	$DB->update_record('interview_slots', $slot);
+	add_to_log($course->id, "interview", "hideslot", "view.php?id=$cm->id", $interview->id, $cm->id);
+
+
+}
+
+function release($course,$cm) {
+	global $DB;
 	// Picks up the necessary parameters
 	$id = required_param('id', PARAM_INT);
 	$slotid = required_param('slotid', PARAM_INT);
 	$studentid = required_param('studentid', PARAM_INT);
 
+	// Compiles the selected empty slot
+	$slot = $DB->get_record('interview_slots', array('id' => $slotid));
+	if($slot->student == $studentid){
 	//It frees the selected string, eliminating
 	// the user that it compiles and leaves it free
 	// to be selected by another user
@@ -373,7 +402,33 @@ function freeslot($course) {
 
 	// It actualizes the temporary string. If something
 	// fails, returns error
-	if (!update_record('interview_slots', $slot)) {
+	if (!$DB->update_record('interview_slots', $slot)) {
+		error(get_string('notupdated', 'interview'));
+	} else {
+		redirect("view.php?id=$cm->id", get_string('updating', 'interview'));
+	}
+
+	// Controls the recent activity done by the users
+	add_to_log($course->id, "interview", "release", "view.php?id=$cm->id", $interview->id, $cm->id);
+
+	}
+}
+
+function freeslot($course,$cm) {
+	global $DB;
+	// Picks up the necessary parameters
+	$slotid = required_param('slotid', PARAM_INT);
+
+	//It frees the selected string, eliminating
+	// the user that it compiles and leaves it free
+	// to be selected by another user
+	$slot->id = $slotid;
+	$slot->student = 0;
+	$slot->timemodified = time();
+
+	// It actualizes the temporary string. If something
+	// fails, returns error
+	if (!$DB->update_record('interview_slots', $slot)) {
 		error(get_string('notupdated', 'interview'));
 	} else {
 		redirect("view.php?id=$cm->id", get_string('updating', 'interview'));
@@ -383,10 +438,11 @@ function freeslot($course) {
 	add_to_log($course->id, "interview", "freeslot", "view.php?id=$cm->id", $interview->id, $cm->id);
 }
 
-function build_fac_slots_table($interview, $cm) { // Compiles the slot strings by id
-	global $DB;
+function build_fac_slots_table($interview, $cm) {
+ // Compiles the slot strings by id
+	global $DB,$OUTPUT;
 	$conditions = array("interviewid" => $interview->id);
-	$slots = $DB->get_records('interview_slots', $conditions , " start ASC");
+	$slots = $DB->get_records('interview_slots', $conditions, " start ASC");
 	$strdate = get_string('date', 'interview');
 	$strstart = get_string('start', 'interview');
 	$strend = get_string('end', 'interview');
@@ -420,9 +476,9 @@ function build_fac_slots_table($interview, $cm) { // Compiles the slot strings b
 		// If the horary string has been selecte by a student
 		if ($slot->student) {
 			// Compiles the user
-			$student = $DB->get_record('user', 'id', $slot->student);
+			$student = $DB->get_record('user', array('id' =>$slot->student));
 			// Shows the picture of the user
-			$picture = $OUTPUT->user_picture(student);
+			$picture = $OUTPUT->user_picture($student);
 			// shows the full name of the user in a formatted link
 			$name = "<a href=\"view.php?action=viewstudent&amp;id=$cm->id&amp;studentid=$student->id&amp;course=$interview->course&amp;order=DESC\">" . fullname($student) . '</a>';
 
@@ -437,8 +493,12 @@ function build_fac_slots_table($interview, $cm) { // Compiles the slot strings b
 		// Establishes the links for the actions
 		$actions = '<span style="font-size: x-small;">';
 		// Action to erase
-		$actions .= "[<a href=\"view.php?action=deleteslot&amp;id=$cm->id&amp;slotid=$slot->id\">" . get_string('delete') . '</a>]';
-
+		if ($slot->available == true && $slot->student == 0) {
+			$actions .= "[<a href=\"view.php?action=hideslot&amp;id=$cm->id&amp;slotid=$slot->id\">" . get_string('hide', 'interview') . '</a>]';
+		}
+		if ($slot->available == false)  {
+			$actions .= "[<a href=\"view.php?action=unhideslot&amp;id=$cm->id&amp;slotid=$slot->id\">" . get_string('unhide', 'interview') . '</a>]';
+		}
 		// If the temporary string already is assigned to a student
 		if ($slot->student != 0) {
 
@@ -455,6 +515,97 @@ function build_fac_slots_table($interview, $cm) { // Compiles the slot strings b
 		$fac_slots_table->data[] = $row;
 	}
 	return $fac_slots_table;
+}
+
+function build_stu_own_slots_table($interview, $cm){
+	global $DB , $USER;
+	// Compiles the temporary strings ordered by id
+	$slots = $DB->get_records('interview_slots', array("interviewid" => $interview->id , "student" => $USER->id), " start ASC");
+
+	$thier_slot = null;
+	// For each of the temporary strings
+	foreach ($slots as $slot) {
+
+		// If the user already has an assigned temporary string
+		if ($slot->student == $USER->id) {
+
+			$thier_slot = "";
+			// Establishes the form that shows the data of the choice
+			$starttime = userdate($slot->start, get_string('strftimetime'));
+			$endtime = userdate($slot->ending, get_string('strftimetime'));
+			$startdate = userdate($slot->start, get_string('strftimedateshort'));
+
+			// square of text were the choice is shown
+			$thier_slot = "";
+			$thier_slot .= '<center>';
+			$thier_slot .= '<b>';
+			$thier_slot .= format_text(get_string('yourselection', 'interview'));
+			$thier_slot .= '</b>';
+			$thier_slot .= format_text(get_string('date', 'interview') . ': ' . $startdate);
+			$thier_slot .= format_text(get_string('hour', 'interview') . ': ' . $starttime . ' - ' . $endtime);
+
+			// Provides the option to change the selected string
+			$thier_slot .= "[<a href=\"view.php?action=release&amp;id=$cm->id&amp;slotid=$slot->id&amp;studentid=$slot->student\">" . get_string('change', 'interview') . '</a>]';
+			$thier_slot .= '</center>';
+		}
+	}
+
+	return $thier_slot;
+
+}
+function build_stu_slots_table($interview, $cm){
+	global $DB,$USER;
+
+	// Compiles the temporary strings ordered by id
+	$slots = $DB->get_records('interview_slots', array("interviewid" => $interview->id), " start ASC");
+
+	$strdate = get_string('date', 'interview');
+	$strstart = get_string('start', 'interview');
+	$strend = get_string('end', 'interview');
+	$strchoose = get_string('choose', 'interview');
+	$straction = get_string('action', 'interview');
+	$strphoto = get_string('photo', 'interview');
+	
+	// Defines the headers and the alignment on the table Horary Strings
+	$stu_slots_table = new html_table();
+	$stu_slots_table->head = array($strdate, $strstart, $strend, $strchoose);
+	$stu_slots_table->headspan = (get_string('slots', 'interview'));
+	$stu_slots_table->align = array('CENTER', 'CENTER', 'CENTER', 'CENTER');
+	$stu_slots_table->data = array();
+
+
+	// For each of the temporary strings
+	foreach ($slots as $slot) {
+
+		// If a student is not assigned and their time has passed,
+		// it's erased and goes on to the next iteration of foreach
+		if ($slot->student == 0 and $slot->ending < time()) {
+			$DB->delete_records('interview_slots',array( 'id'=> $slot->id));
+			continue;
+		}
+
+		// Does not show the temporary strings that have been
+		// assigned to another student
+		if ($slot->student != 0) {
+			continue;
+		}
+		$row = array();
+		// defines the form that shows the date of the session
+		$row["starttime"] = userdate($slot->start, get_string('strftimetime'));
+		$row["endtime"] = userdate($slot->ending, get_string('strftimetime'));
+		$row["startdate"] = userdate($interview->timeopen, get_string('strftimedateshort'));
+
+		// establishes the link for the action
+		$actions = '<span style="font-size: x-small;">';
+
+		// Action to pick a temporary string
+		$actions .= "[<a href=\"view.php?action=mine&amp;id=$cm->id&amp;interviewid=$interview->id&amp;slotid=$slot->id\">" . get_string('assign', 'interview') . '</a>]';
+		$actions .= '</span>';
+		$row["actions"] = $actions;
+		// Inserts the data in the table
+		$stu_slots_table->data[] = $row;
+	}
+	return $stu_slots_table;
 }
 
 function  get_course_students($courseid, $sort, $dir) {
