@@ -19,8 +19,8 @@
 
 function xmldb_interview_upgrade($oldversion=0) {
 
-    global $CFG, $THEME, $db;
-
+    global $CFG, $THEME, $DB;
+	$dbman = $DB->get_manager();
     $result = true;
 
 /// And upgrade begins here. For each one, you'll need one 
@@ -32,18 +32,20 @@ function xmldb_interview_upgrade($oldversion=0) {
 ///     $result = result of "/lib/ddllib.php" function calls
 /// }
 
-//    if ($result && $oldversion < 2009121100) {
-//
-//    /// Define field timemodified to be added to forum_queue
-//        $table = new XMLDBTable('interview');
-//        $field = new XMLDBField('timeblock');
-//        $field->setAttributes(XMLDB_TYPE_INTEGER, '10', XMLDB_SIGNED, XMLDB_NOTNULL, null, null, null, '0', 'description');
-//
-//
-//    /// Launch add field timemodified
-//        $result = $result && add_field($table, $field);
-//    }
+    if ($oldversion < 2011051901) {
 
+        // Define field available to be added to interview_slots
+        $table = new xmldb_table('interview_slots');
+        $field = new xmldb_field('available', XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '1', 'timemodified');
+
+        // Conditionally launch add field available
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // interview savepoint reached
+        upgrade_mod_savepoint(true, 2011051901, 'interview');
+    }
     return $result;
 }
 
