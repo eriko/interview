@@ -16,36 +16,37 @@
         $mform    =& $this->_form;
 
 //-------------------------------------------------------------------------------
-// Ajustes generales: nombre y descripción de la entrevista
+// General settings: name and interview description
 
-        //Cabecera
+        //Header
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
-		// Nombre
+		// Name
         $mform->addElement('text', 'name', get_string('name'),'maxlength="100"');
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 
-		// Descripción
-        $mform->addElement('htmleditor', 'description', get_string('description'));
-        $mform->setType('text', PARAM_RAW);
-        $mform->addRule('description', null, 'required', null, 'client');
+		// Description
+		$this->add_intro_editor(true, get_string('intro', 'interview'));
+        //$mform->addElement('htmleditor', 'info', get_string('info'));
+        //$mform->setType('text', PARAM_RAW);
+        //$mform->addRule('info', null, 'required', null, 'client');
         //$mform->setHelpButton('description', array('writing', 'questions', 'richtext'), false, 'editorhelpbutton');
 
 //-------------------------------------------------------------------------------
-// Establece el límite temporal de la sesión de entrevistas y la duración de cada franja
+//Set the limit to the interview session and the length of each slot
 
-        // Cabecera: Fecha
+        // Header date
         $mform->addElement('header', 'date', get_string('date', 'interview'));
 
-        // Fecha de comienzo (Día/Mes/Año/Hora/Minuto)
-        $mform->addElement('date_time_selector', 'timeopen', get_string('timeopen', 'interview'));
+        // Start Date (Day / Month / Year / Hour / Minute)
+        $mform->addElement('date_time_selector', 'timeopen', get_string('timeopen', 'interview'),array("step"=>60,'optional'=>false));
         $mform->addHelpButton('timeopen', 'duration', 'interview');
 
-        // Fecha de finalización (Día/Mes/Año/Hora/Minuto)
-        $mform->addElement('date_time_selector', 'timeclose', get_string('timeclose', 'interview'));
+        // End Date (Day / Month / Year / Hour / Minute)
+        $mform->addElement('date_time_selector', 'timeclose', get_string('timeclose', 'interview'),array("step"=>60,'optional'=>false));
         $mform->addHelpButton('timeclose', 'duration', 'interview');
-        // Cabecera: Franjas horarias
+        // Header slots
         $mform->addElement('header', 'slots', get_string('slots', 'interview'));
 
         $options=array();
@@ -64,31 +65,31 @@
         }
         $mform->addElement('select', 'timeblock', get_string('timeblock', 'interview'), $options);
 
-        // Duración de cada franja
+        // Length of each slot
 		$mform->addElement('text', 'timeslot', get_string('timeslot','interview'),'maxlength="3"');
         $mform->setType('timeslot', PARAM_INT);
         $mform->addRule('timeslot', null, 'required', null, 'client');
 		$mform->addHelpButton('timeslot', 'duration', 'interview');
 
 //-------------------------------------------------------------------------------
-// Establece el lugar de la cita y el profesor al mando
+// Set the date and place of the teacher in charge
 
-        // Cabecera: detalles de la cita
+        // Header: Citation Details
         $mform->addElement('header', 'details', get_string('details', 'interview'));
 
-        // Lugar de la cita
+        // Meeting place
         $mform->addElement('text', 'location', get_string('location','interview'),'maxlength="50"');
 
-        // Profesor al mando
+        //Professor in charge
         $mform->addElement('text', 'teacher', get_string('teacher','interview'),'maxlength="50"');
 
 //-------------------------------------------------------------------------------
-// Establece la visibilidad
+// Set the visibility
 
         $mform->addElement('modvisible', 'visible', get_string('visible'));
 		$this->standard_hidden_coursemodule_elements();
 //-------------------------------------------------------------------------------
-// Establece los botones de Guardar cambios y Cancelar
+// Set the buttons Save and Cancel changes
 
         $this->add_action_buttons();
     }
@@ -109,32 +110,34 @@
     // Validación del formulario con comprobaciones de error al intentar enviar los datos
     function validation($data){
 
-        // Para que esté todo correcto tiene que cumplirse:
-        // 1. Tiempo inicio > Tiempo actual
-        // 2. Tiempo cierre > Tiempo actual
-        // 3. Tiempo cierre > Tiempo inicio
-        // 4. Minutos por franja debe ser numérico
-        // 5. Minutos por franja > 0 y distinto de vacío
-        // 6. Tiempo de cierre - Tiempo de inicio >= Minutos por franja
-        // 7. Duración_sesión = Duración_franja·N, siendo N entero
+ // For this is all right must be met:
+         // 1. Start Time> Current Time
+         // 2. Closing Time> Current Time
+         // 3. Closing Time> Time Start
+         // 4. Minutes per band must be numeric
+         // 5. Minutes per strip> 0 and different vacuum
+         // 6. Closing time - start time> = Minutes per strip
+         // 7. Session Length = Length Strip, where N is integer
 
-        // Almacena la hora de inicio de la sesión
+		$days =  date('d', $data['timeclose']) - date('d', $data['timeopen']);
+
+        // Get the start time of the session
         $a = date('H', $data['timeopen']);
 
-        // Almacena los minutos de inicio de la sesión
+        // Get the minutes of the start of the session
         $b = date('i', $data['timeopen']);
 
-        // Pasa todo a minutos
+        // Spend all within minutes
         $minstart = $a*60+$b;
 
-        // Almacena la hora de finalización de la sesión
+        // Get the time of closing of the session
         $c = date('H', $data['timeclose']);
 
-        // Almacena los minutos de finalización de la sesión
+        // Get the minutes of Logging
         $d = date('i', $data['timeclose']);
 
-        // Pasa todo a minutos
-        $minend = $c*60+$d;
+        // Spend all within minutes
+        $minend = (($days*24)+$c)*60+$d;
 
         if ($data['timeopen']>=time() and $data['timeclose']>time() and $data['timeclose']>$data['timeopen'] and
             is_numeric($data['timeslot']) and $data['timeslot']>0 and
@@ -142,36 +145,35 @@
 			is_int(($minend - $minstart)/$data['timeslot'])) {
             return true;
 
-        // Establece un cuadro rodeando el tiempo de apertura e indicando que debe ser posterior a la fecha actual
+        // Establishing a time frame surrounding the opening and indicating that should be after the current date
         } elseif ($data['timeopen'] < time()) {
             return array('timeopen'=>get_string('timeopenfail', 'interview'));
 
-        // Establece un cuadro rodeando el tiempo de cierre e indicando que debe ser posterior a la fecha actual
+        // Set a table around closing time and indicating that should be after the current date
         } elseif ($data['timeclose'] <= time()) {
             return array('timeclose'=>get_string('timeclosefail', 'interview'));
 
-        // Establece un cuadro rodeando el tiempo de cierre e indicando que debe ser posterior al tiempo de apertura
+        // Establishing a time frame surrounding the closure and stating that time must be after the opening
         } elseif ($data['timeclose']<= $data['timeopen']) {
             return array('timeclose'=>get_string('timefail', 'interview'));
 
-        // Establece un cuadro rodeando la duración de la franja e indicando que debe proporcionarse un valor numérico
+        // Set a frame around the slot duration and indicating that should provide a numerical value
         } elseif (!is_numeric($data['timeslot'])) {
             return array('timeslot'=>get_string('numeric', 'interview'));
 
-        // Establece un cuadro rodeando la duración de la franja e indicando que debe proporcionarse un valor positivo
-        // y distinto de cero
+        // Set a frame around the slot duration and indicating to be given a positive and non 0
         } elseif ($data['timeslot']<=0 ) {
             return array('timeslot'=>get_string('positive', 'interview'));
 
-        // Establece un cuadro rodeando la duración de la franja e indicando que ésta debe ser menor que la
-        // duración de la sesión
+        // Set a frame around the slot duration stating that this should be less than the duration of the session
         } elseif ($minend - $minstart < $data['timeslot']) {
-            return array('timeslot'=>get_string('timeslotfail', 'interview'));
+			$error = get_string('timeslotfail', 'interview') . $minend - $minstart. " minutes minend $minend - minstart $minstart over days $days";
+            return array('timeslot'=> get_string('timeslotfail', 'interview'));
 
-        // Establece un cuadro rodeando la duración de la franja e indicando que debe proporcionarse un valor que encaje perfectamente
-		// en la duración de la sesión
+        // Set a frame around the slot duration and indicating to be given a value that fits snugly in the duration of
+		// the session
 		} elseif (!is_int(($minend - $minstart)/$data['timeslot'])) {
-			return array('timeslot'=>get_string('fit', 'interview'));
+			return array('timeslot'=>get_string('fit', 'interview')."for ".$minend - $minstart." minutes");
 		}
     }
 }

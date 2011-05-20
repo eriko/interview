@@ -155,7 +155,7 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 	// Shows the name of the instance in header format
 	$pg_heading = ($interview->name);
 
-	view_description($interview);
+	view_intro($interview,$cm);
 
 
 	/************** TABLA 1 **************/
@@ -234,10 +234,10 @@ if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $c
 	//}
 	
 	// Shows the description in a square
-	if ($interview->description) {
+	if ($interview->intro) {
 		echo '<center>';
 		$OUTPUT->box_start( 'center', '', '#eee');
-		echo format_text($interview->description);
+		echo format_text($interview->intro);
 
 		$OUTPUT->box_end();
 		echo '</center>';

@@ -46,6 +46,28 @@ function xmldb_interview_upgrade($oldversion=0) {
         // interview savepoint reached
         upgrade_mod_savepoint(true, 2011051901, 'interview');
     }
+
+	 if ($oldversion < 2011052000) {
+
+        // Rename field intro on table interview to NEWNAMEGOESHERE
+        $table = new xmldb_table('interview');
+        $field = new xmldb_field('description', XMLDB_TYPE_TEXT, 'small', null, XMLDB_NOTNULL, null, null, 'name');
+
+        // Launch rename field intro
+        $dbman->rename_field($table, $field, 'intro');
+
+		// Define field introformat to be added to interview
+		$field = new xmldb_field('introformat', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0', 'intro');
+
+        // Conditionally launch add field introformat
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // interview savepoint reached
+        upgrade_mod_savepoint(true, 2011052000, 'interview');
+    }
+
     return $result;
 }
 

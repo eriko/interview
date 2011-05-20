@@ -80,6 +80,7 @@ class interview_base {
 	}
 
 
+
 }
 
 /****************************
@@ -99,20 +100,13 @@ class interview_base {
  * This in turn calls the methods producing individual parts of the page
  */
 
-
-function view_description($interview) {
+function view_intro($interview,$cm) {
 	global $OUTPUT;
-	// Shows the description of the interview in a box
-	if ($interview->description) {
-		echo '<center>';
-		$OUTPUT->box(format_text($interview->description), 'center', '', '#eee');
-		echo '</center>';
-	}
+	echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+	echo format_module_intro('interview', $interview, $cm->id);
 
 	// If a place or professor has been established it's shown in another box
 	if ($interview->location or $interview->teacher) {
-		echo '<center>';
-		$OUTPUT->box_start('center', '', '#eee');
 		if (!empty($interview->location)) {
 			echo '<b>';
 			echo get_string('location', 'interview');
@@ -126,10 +120,11 @@ function view_description($interview) {
 			echo '</b>';
 			echo ': ' . $interview->teacher;
 		}
-		$OUTPUT->box_end();
-		echo '</center>';
 	}
+
+	echo $OUTPUT->box_end();
 }
+
 
 function view_header($interview, $course, $cm) {
 	global $CFG, $PAGE, $OUTPUT;
@@ -186,7 +181,7 @@ function interview_add_instance($interview) {
  */
 
 function interview_update_instance($interview) {
-
+	global $DB;
 	// Create a new object
 	$opt = new object();
 	$opt->timemodified = time();
@@ -208,11 +203,11 @@ function interview_update_instance($interview) {
 	}
 
 	// If a description has been established, assign it
-	if (isset($interview->description)) {
-		$opt->description = $interview->description;
+	if (isset($interview->intro)) {
+		$opt->intro = $interview->intro;
 	}
 
-	return update_record('interview', $opt);
+	return $DB->update_record('interview', $opt);
 }
 
 /**
@@ -224,7 +219,7 @@ function interview_update_instance($interview) {
 function interview_delete_instance($id) {
 	global $DB;
 	// Compile the primary relationship of the interview table that fulfills the restriction
-	$interview = $DB->get_record('interview',array( 'id'=> $id));
+	$interview = $DB->get_record('interview', array('id' => $id));
 
 	// If there is no relationship in the table that has the id you're looking for return false
 	if (!$interview) {
@@ -236,11 +231,11 @@ function interview_delete_instance($id) {
 
 	// Eliminate whatever relationship dependant on the previous, if in any moment
 	// something fails, $result becomes false
-	if (!$DB->delete_records('interview', array('id'=> $interview->id))) {
+	if (!$DB->delete_records('interview', array('id' => $interview->id))) {
 		$result = false;
 	}
 
-	if (!$DB->delete_records('interview_slots', array('interviewid'=> $interview->id))) {
+	if (!$DB->delete_records('interview_slots', array('interviewid' => $interview->id))) {
 		$result = false;
 	}
 
@@ -248,9 +243,9 @@ function interview_delete_instance($id) {
 	return $result;
 }
 
-function select($course,$cm) {
+function select($course, $cm) {
 
-	global $USER,$DB;
+	global $USER, $DB;
 
 	// It picks up the necessary variables
 	$id = required_param('id', PARAM_INT);
@@ -265,7 +260,7 @@ function select($course,$cm) {
 	}
 
 	// compiles the selected temporary string
-	$chosenslot = $DB->get_record('interview_slots',array('id'=> $slotid));
+	$chosenslot = $DB->get_record('interview_slots', array('id' => $slotid));
 
 	// If fails returns error
 	if (!$chosenslot) {
@@ -274,7 +269,7 @@ function select($course,$cm) {
 
 
 	// Compiles all the temporary strings
-	$slots = $DB->get_records('interview_slots',array('interviewid'=> $interviewid));
+	$slots = $DB->get_records('interview_slots', array('interviewid' => $interviewid));
 
 	// For each one
 	foreach ($slots as $slot) {
@@ -301,7 +296,7 @@ function select($course,$cm) {
 	add_to_log($course->id, "interview", "choose", "view.php?id=$cm->id", "$interviewid");
 }
 
-function assign($course,$cm) {
+function assign($course, $cm) {
 	global $DB;
 	// It picks up the necessary variables
 	$id = required_param('id', PARAM_INT);
@@ -316,7 +311,7 @@ function assign($course,$cm) {
 	}
 
 	// Compiles the selected empty slot
-	$slot = $DB->get_record('interview_slots', array('id'=> $slotid));
+	$slot = $DB->get_record('interview_slots', array('id' => $slotid));
 
 	// If fails returns error
 	if (!$slot) {
@@ -382,7 +377,7 @@ function unhideslot($course, $cm, $interview) {
 
 }
 
-function release($course,$cm) {
+function release($course, $cm) {
 	global $DB;
 	// Picks up the necessary parameters
 	$id = required_param('id', PARAM_INT);
@@ -391,30 +386,30 @@ function release($course,$cm) {
 
 	// Compiles the selected empty slot
 	$slot = $DB->get_record('interview_slots', array('id' => $slotid));
-	if($slot->student == $studentid){
-	//It frees the selected string, eliminating
-	// the user that it compiles and leaves it free
-	// to be selected by another user
-	$studentid = 0;
-	$slot->id = $slotid;
-	$slot->student = $studentid;
-	$slot->timemodified = time();
+	if ($slot->student == $studentid) {
+		//It frees the selected string, eliminating
+		// the user that it compiles and leaves it free
+		// to be selected by another user
+		$studentid = 0;
+		$slot->id = $slotid;
+		$slot->student = $studentid;
+		$slot->timemodified = time();
 
-	// It actualizes the temporary string. If something
-	// fails, returns error
-	if (!$DB->update_record('interview_slots', $slot)) {
-		error(get_string('notupdated', 'interview'));
-	} else {
-		redirect("view.php?id=$cm->id", get_string('updating', 'interview'));
-	}
+		// It actualizes the temporary string. If something
+		// fails, returns error
+		if (!$DB->update_record('interview_slots', $slot)) {
+			error(get_string('notupdated', 'interview'));
+		} else {
+			redirect("view.php?id=$cm->id", get_string('updating', 'interview'));
+		}
 
-	// Controls the recent activity done by the users
-	add_to_log($course->id, "interview", "release", "view.php?id=$cm->id", $interview->id, $cm->id);
+		// Controls the recent activity done by the users
+		add_to_log($course->id, "interview", "release", "view.php?id=$cm->id", $interview->id, $cm->id);
 
 	}
 }
 
-function freeslot($course,$cm) {
+function freeslot($course, $cm) {
 	global $DB;
 	// Picks up the necessary parameters
 	$slotid = required_param('slotid', PARAM_INT);
@@ -439,8 +434,8 @@ function freeslot($course,$cm) {
 }
 
 function build_fac_slots_table($interview, $cm) {
- // Compiles the slot strings by id
-	global $DB,$OUTPUT;
+	// Compiles the slot strings by id
+	global $DB, $OUTPUT;
 	$conditions = array("interviewid" => $interview->id);
 	$slots = $DB->get_records('interview_slots', $conditions, " start ASC");
 	$strdate = get_string('date', 'interview');
@@ -464,7 +459,7 @@ function build_fac_slots_table($interview, $cm) {
 		// it erases and it passes to the second iteration of the foreach
 
 		if ($slot->student == 0 and $slot->ending < time()) {
-			$DB->delete_records('interview_slots', 'id', $slot->id);
+			$DB->delete_records('interview_slots', array('id'=>$slot->id));
 			continue;
 		}
 		$row = array();
@@ -476,7 +471,7 @@ function build_fac_slots_table($interview, $cm) {
 		// If the horary string has been selecte by a student
 		if ($slot->student) {
 			// Compiles the user
-			$student = $DB->get_record('user', array('id' =>$slot->student));
+			$student = $DB->get_record('user', array('id' => $slot->student));
 			// Shows the picture of the user
 			$picture = $OUTPUT->user_picture($student);
 			// shows the full name of the user in a formatted link
@@ -496,7 +491,7 @@ function build_fac_slots_table($interview, $cm) {
 		if ($slot->available == true && $slot->student == 0) {
 			$actions .= "[<a href=\"view.php?action=hideslot&amp;id=$cm->id&amp;slotid=$slot->id\">" . get_string('hide', 'interview') . '</a>]';
 		}
-		if ($slot->available == false)  {
+		if ($slot->available == false) {
 			$actions .= "[<a href=\"view.php?action=unhideslot&amp;id=$cm->id&amp;slotid=$slot->id\">" . get_string('unhide', 'interview') . '</a>]';
 		}
 		// If the temporary string already is assigned to a student
@@ -517,10 +512,10 @@ function build_fac_slots_table($interview, $cm) {
 	return $fac_slots_table;
 }
 
-function build_stu_own_slots_table($interview, $cm){
-	global $DB , $USER;
+function build_stu_own_slots_table($interview, $cm) {
+	global $DB, $USER;
 	// Compiles the temporary strings ordered by id
-	$slots = $DB->get_records('interview_slots', array("interviewid" => $interview->id , "student" => $USER->id), " start ASC");
+	$slots = $DB->get_records('interview_slots', array("interviewid" => $interview->id, "student" => $USER->id), " start ASC");
 
 	$thier_slot = null;
 	// For each of the temporary strings
@@ -553,8 +548,9 @@ function build_stu_own_slots_table($interview, $cm){
 	return $thier_slot;
 
 }
-function build_stu_slots_table($interview, $cm){
-	global $DB,$USER;
+
+function build_stu_slots_table($interview, $cm) {
+	global $DB, $USER;
 
 	// Compiles the temporary strings ordered by id
 	$slots = $DB->get_records('interview_slots', array("interviewid" => $interview->id), " start ASC");
@@ -565,7 +561,7 @@ function build_stu_slots_table($interview, $cm){
 	$strchoose = get_string('choose', 'interview');
 	$straction = get_string('action', 'interview');
 	$strphoto = get_string('photo', 'interview');
-	
+
 	// Defines the headers and the alignment on the table Horary Strings
 	$stu_slots_table = new html_table();
 	$stu_slots_table->head = array($strdate, $strstart, $strend, $strchoose);
@@ -580,7 +576,7 @@ function build_stu_slots_table($interview, $cm){
 		// If a student is not assigned and their time has passed,
 		// it's erased and goes on to the next iteration of foreach
 		if ($slot->student == 0 and $slot->ending < time()) {
-			$DB->delete_records('interview_slots',array( 'id'=> $slot->id));
+			$DB->delete_records('interview_slots', array('id' => $slot->id));
 			continue;
 		}
 
@@ -679,5 +675,21 @@ function build_facstu_list_table($interview, $cm, $course) {
 	return $stu_list_table;
 
 }
+
+/**
+ * Adds module specific settings to the settings block
+ *
+ * @param settings_navigation $settings The settings navigation object
+ * @param navigation_node $forumnode The node to add module settings to
+ */
+function forum_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $forumnode) {
+    global $USER, $PAGE, $CFG, $DB, $OUTPUT;
+
+    $forumobject = $DB->get_record("forum", array("id" => $PAGE->cm->instance));
+    if (empty($PAGE->cm->context)) {
+        $PAGE->cm->context = get_context_instance(CONTEXT_MODULE, $PAGE->cm->instance);
+    }
+}
+
 
 ?>
