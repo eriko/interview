@@ -177,7 +177,7 @@ function interview_add_instance($interview) {
 /**
  * Given an object containing all the necessary data,
  * (defined by the formula in mod.html) this function
- * actualizes an existing instance with new data
+ * Makes an existing instance with new data
  */
 
 function interview_update_instance($interview) {
@@ -267,7 +267,7 @@ function select($course, $cm) {
 		error(get_string('invalidslotid', 'interview'));
 	}
 
-
+	if (has_capability('mod/interview:choose', $context, $USER->id)){
 	// Compiles all the temporary strings
 	$slots = $DB->get_records('interview_slots', array('interviewid' => $interviewid));
 
@@ -287,13 +287,18 @@ function select($course, $cm) {
 	$chosenslot->timemodified = time();
 
 
-	// Actualizes the string. If it's not possible, returns error
+	// Makes the slot. If it's not possible, returns error
 	if (!$DB->update_record('interview_slots', $chosenslot)) {
 		print_error(get_string('notsaved', 'interview'));
 	}
 
 	// It's used to control the recent activity carried out by the user
 	add_to_log($course->id, "interview", "choose", "view.php?id=$cm->id", "$interviewid");
+	}else{
+		print_error(get_string('notallowed', 'interview'));
+		// It's used to control the recent activity carried out by the user
+		add_to_log($course->id, "interview", "choose", "view.php?id=$cm->id", "$interviewid");
+	}
 }
 
 function assign($course, $cm) {
@@ -323,7 +328,7 @@ function assign($course, $cm) {
 		$slot->student = $studentid;
 		$slot->timemodified = time();
 
-		// Actualizes the string. If it's not possible, returns error
+		// Makes the string. If it's not possible, returns error
 		if (!$DB->update_record('interview_slots', $slot)) {
 			print_error(get_string('notassign', 'interview'));
 		}
@@ -395,7 +400,7 @@ function release($course, $cm) {
 		$slot->student = $studentid;
 		$slot->timemodified = time();
 
-		// It actualizes the temporary string. If something
+		// It Makes the temporary string. If something
 		// fails, returns error
 		if (!$DB->update_record('interview_slots', $slot)) {
 			error(get_string('notupdated', 'interview'));
@@ -421,7 +426,7 @@ function freeslot($course, $cm) {
 	$slot->student = 0;
 	$slot->timemodified = time();
 
-	// It actualizes the temporary string. If something
+	// It Makes the temporary slot. If something
 	// fails, returns error
 	if (!$DB->update_record('interview_slots', $slot)) {
 		error(get_string('notupdated', 'interview'));
@@ -680,15 +685,23 @@ function build_facstu_list_table($interview, $cm, $course) {
  * Adds module specific settings to the settings block
  *
  * @param settings_navigation $settings The settings navigation object
- * @param navigation_node $forumnode The node to add module settings to
+ * @param navigation_node $interviewnode The node to add module settings to
  */
-function forum_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $forumnode) {
+function interview_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $interviewnode) {
     global $USER, $PAGE, $CFG, $DB, $OUTPUT;
 
-    $forumobject = $DB->get_record("forum", array("id" => $PAGE->cm->instance));
+    $interviewobject = $DB->get_record("forum", array("id" => $PAGE->cm->instance));
     if (empty($PAGE->cm->context)) {
         $PAGE->cm->context = get_context_instance(CONTEXT_MODULE, $PAGE->cm->instance);
     }
+
+
+    // for some actions you need to be enrolled, beiing admin is not enough sometimes here
+    $enrolled = is_enrolled($PAGE->cm->context, $USER, '', false);
+    $activeenrolled = is_enrolled($PAGE->cm->context, $USER, '', true);
+
+    $canmanage  = has_capability('mod/interview:manage', $PAGE->cm->context);
+
 }
 
 

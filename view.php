@@ -132,7 +132,7 @@ switch ($action) {
 //	(format_string($interview->name), '',
 //"<a href=\"index.php?id=$course->id\">$strinterviews</a> -> ".format_string($interview->name),
 //"", "", true, update_module_button($cm->id, $course->id, $strinterview), navmenu($course, $cm));
-
+$output = $PAGE->get_renderer('mod_interview');
 view_header($interview, $course, $cm);
 
 /************************************* PROFESSOR ***********************************/
@@ -142,7 +142,7 @@ view_header($interview, $course, $cm);
 
 $context = get_context_instance(CONTEXT_MODULE, $cm->id);
 
-if (has_capability('mod/interview:edit', $context, $USER->id)) {
+if (has_capability('mod/interview:manage', $context, $USER->id)) {
 	echo '<H2>Is faculty</H2>';
 }
 elseif (has_capability('mod/interview:choose', $context, $USER->id)) {
@@ -150,7 +150,7 @@ elseif (has_capability('mod/interview:choose', $context, $USER->id)) {
 }
 
 //should be has role faculty
-if (has_capability('mod/interview:edit', get_context_instance(CONTEXT_COURSE, $course->id), $USER->id)) {
+if (has_capability('mod/interview:mange', get_context_instance(CONTEXT_COURSE, $course->id), $USER->id)) {
 
 	// Shows the name of the instance in header format
 	$pg_heading = ($interview->name);

@@ -50,6 +50,7 @@ $string['name'] = 'Name';
 $string['nointerviews'] = 'There are no interviews';
 $string['norestriction'] = 'Slots generated for 24 hours';
 $string['nosaved'] = 'Could not save your choice';
+$string['noallowed'] = 'You are not allowed to do that';
 $string['notanswered'] = 'Not answered yet';
 $string['notassign'] = 'Could not assign the time-slot';
 $string['notdeleted'] = 'Could not delete the time-slot';
@@ -106,4 +107,11 @@ $string['starttime_help'] = 'The date and time of the first session';
 $string['endtime_help'] = 'The date and time of the end of the last session';
 $string['timeblock_help'] = 'There are 4 time blocks ';
 $string['minutes_help'] = 'test';
+
+
+$string[    'interview:choose'] = 'Choose a slot  ';
+$string[    'interview:change'] = 'Unselect slot Change slots  ';
+$string[    'interview:manage'] = 'Manage interview ((un)hide, free, set slots)  ';
+
+
 ?>
