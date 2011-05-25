@@ -132,6 +132,8 @@ switch ($action) {
 //	(format_string($interview->name), '',
 //"<a href=\"index.php?id=$course->id\">$strinterviews</a> -> ".format_string($interview->name),
 //"", "", true, update_module_button($cm->id, $course->id, $strinterview), navmenu($course, $cm));
+
+
 $output = $PAGE->get_renderer('mod_interview');
 view_header($interview, $course, $cm);
 
@@ -150,7 +152,7 @@ elseif (has_capability('mod/interview:choose', $context, $USER->id)) {
 }
 
 //should be has role faculty
-if (has_capability('mod/interview:mange', get_context_instance(CONTEXT_COURSE, $course->id), $USER->id)) {
+if (has_capability('mod/interview:manage', get_context_instance(CONTEXT_COURSE, $course->id), $USER->id)) {
 
 	// Shows the name of the instance in header format
 	$pg_heading = ($interview->name);
@@ -163,7 +165,7 @@ if (has_capability('mod/interview:mange', get_context_instance(CONTEXT_COURSE, $
 	/************** TABLE 1 **************/
 	/*************************************/
 
-	$fac_slots_table = build_fac_slots_table($interview, $cm);
+	$fac_slots_table = $output->build_fac_slots_table($interview, $cm);
 	// T’tulo de la tabla
 	// Title of the table
 	$tb1_heading = (get_string('slots', 'interview'));
@@ -194,7 +196,7 @@ if (has_capability('mod/interview:mange', get_context_instance(CONTEXT_COURSE, $
 	/************** TABLE 2 **************/
 	/*************************************/
 
-	$stu_list_table = build_facstu_list_table($interview, $cm, $course);
+	$stu_list_table = $output->build_facstu_list_table($interview, $cm, $course);
 	// collects the students in the course
 
 	// Counts the elements of the array
@@ -219,7 +221,7 @@ if (has_capability('mod/interview:mange', get_context_instance(CONTEXT_COURSE, $
 
 	// Shows the name of the instance formed in the header
 	$heading = ($interview->name);
-	$stu_own_slot = build_stu_own_slots_table($interview, $cm);
+	$stu_own_slot = $output->build_stu_own_slots_table($interview, $cm);
 	if ($stu_own_slot != null) {
 		$OUTPUT->box_start('center');
 		echo $stu_own_slot;
