@@ -4,7 +4,7 @@
  * Este archivo php se encarga de llevar a cabo la descarga de los
  * resultados que se van obteniendo.
  */
-
+	global $DB;
     // Se incluyen los ficheros especificados
     require_once("../../config.php");
     require_once("lib.php");
@@ -24,7 +24,7 @@
     }
 
 	// Almacena la primera relación que cumpla la restricción
-	$course = get_record('course', 'id', $cm->course);
+	$course = $DB->get_record('course', array('id' => $cm->course));
 
 	// Si no encuentra ninguna, muestra un error
     if (!$course) {
@@ -38,7 +38,7 @@
     $context = get_context_instance(CONTEXT_MODULE, $cm->id);
 
     // Almacena la instancia
-    $interview = get_record('interview', 'id', $cm->instance);
+    $interview = $DB->get_record('interview', array('id'=> $cm->instance));
 
 	// Si falla, devuelve error
     if (!$interview) {
@@ -95,7 +95,7 @@
             foreach ($users as $user) {
 
 				// Almacena la franja temporal asociada a él
-            	$slot = get_record('interview_slots', 'interviewid', $interview->id,'student', $user->id);
+            	$slot = $DB->get_record('interview_slots', array('interviewid'=> $interview->id,'student'=> $user->id));
 
 
                     // Si no es vacío su estudiante asignado
@@ -161,7 +161,7 @@
             foreach ($users as $user) {
 
 				// Almacena la franja temporal asociada a él
-        		$slot = get_record('interview_slots', 'interviewid', $interview->id,'student', $user->id);
+        		$slot = $DB->get_record('interview_slots',array( 'interviewid'=> $interview->id,'student'=> $user->id));
 
                 // Si no es vacío su estudiante asignado
                 if (!empty($slot->student) ){
@@ -220,7 +220,7 @@
             foreach ($users as $user) {
 
 				// Almacena la franja temporal asociada a él
-                $slot = get_record('interview_slots', 'interviewid', $interview->id,'student', $user->id);
+                $slot = $DB->get_record('interview_slots',array( 'interviewid'=> $interview->id,'student'=> $user->id));
 
                 // Si no es vacío su estudiante asignado
             	if (!empty($slot->student)) {

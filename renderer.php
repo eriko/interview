@@ -9,6 +9,36 @@
  
 class mod_interview_renderer extends plugin_renderer_base {
 
+/**
+ * Display the interview, used by view.php
+ *
+ * This in turn calls the methods producing individual parts of the page
+ */
+
+function view_intro($interview,$cm) {
+	global $OUTPUT;
+	echo $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+	echo format_module_intro('interview', $interview, $cm->id);
+
+	// If a place or professor has been established it's shown in another box
+	if ($interview->location or $interview->teacher) {
+		if (!empty($interview->location)) {
+			echo '<b>';
+			echo get_string('location', 'interview');
+			echo '</b>';
+			echo ': ' . $interview->location;
+		}
+		if (!empty($interview->teacher)) {
+			echo '<br/>';
+			echo '<b>';
+			echo get_string('teacher', 'interview');
+			echo '</b>';
+			echo ': ' . $interview->teacher;
+		}
+	}
+
+	echo $OUTPUT->box_end();
+}
 
 function build_stu_slots_table($interview, $cm) {
 	global $DB, $USER;

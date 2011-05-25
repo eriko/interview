@@ -157,7 +157,7 @@ if (has_capability('mod/interview:manage', get_context_instance(CONTEXT_COURSE, 
 	// Shows the name of the instance in header format
 	$pg_heading = ($interview->name);
 
-	view_intro($interview,$cm);
+	$output->view_intro($interview,$cm);
 
 
 	/************** TABLA 1 **************/
@@ -182,13 +182,16 @@ if (has_capability('mod/interview:manage', get_context_instance(CONTEXT_COURSE, 
 	$options = array();
 	$options["id"] = "$cm->id";
 	$options["download"] = "ods";
-	echo $OUTPUT->single_button("report.php", get_string('downloadods'), 'post', $options);
+	$url = new moodle_url("report.php");
+	$url->param("id" ,"$cm->id");
+	$url->param("download", "ods");
+	echo $OUTPUT->single_button($url, get_string('downloadods'), 'post', $options);
 	echo "</td><td>";
-	$options["download"] = "xls";
-	echo $OUTPUT->single_button("report.php", get_string('downloadexcel'), 'post', $options);
+	$url->param("download",  "xls");
+	echo $OUTPUT->single_button($url, get_string('downloadexcel'), 'post', $options);
 	echo "</td><td>";
-	$options["download"] = "txt";
-	echo $OUTPUT->single_button("report.php", get_string('downloadtext'), 'post', $options);
+	$url->param("download",  "txt");
+	echo $OUTPUT->single_button($url, get_string('downloadtext'), 'post', $options);
 	echo "</td></tr></table>";
 	echo '<br /><br />';
 
