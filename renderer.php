@@ -86,7 +86,7 @@ function build_stu_slots_table($interview, $cm) {
 		$actions = '<span style="font-size: x-small;">';
 
 		// Action to pick a temporary string
-		$actions .= "[<a href=\"view.php?action=mine&amp;id=$cm->id&amp;interviewid=$interview->id&amp;slotid=$slot->id\">" . get_string('assign', 'interview') . '</a>]';
+		$actions .= "[<a href=\"view.php?action=mine&amp;id=$cm->id&amp;interviewid=$interview->id&amp;slotid=$slot->id\">" . get_string('select', 'interview') . '</a>]';
 		$actions .= '</span>';
 		$row["actions"] = $actions;
 		// Inserts the data in the table

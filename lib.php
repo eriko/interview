@@ -1,33 +1,17 @@
 <?php
 
+
 /**
- * This php document contains all the functions
- * necessary for the correct execution of the model
+ * Given an object containing all the necessary data,
+ * (defined by the formula in mod.html) this function
+ * Makes an existing instance with new data
  */
-
-
-
-
-
-
-function view_header($interview, $course, $cm) {
-	global $CFG, $PAGE, $OUTPUT;
-	$PAGE->set_url('/mod/interview/view.php', array('id' => $cm->id));
-	$strinterviews = get_string('modulenameplural', 'interview');
-	$PAGE->set_title(format_string($interview->name));
-	$PAGE->set_heading("<a href=\"index.php?id=$course->id\">$strinterviews</a> -> " . format_string($interview->name));
-
-	echo $OUTPUT->header();
-
-	groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/inteview/view.php?id=' . $cm->id);
-
-	echo '<div class="clearer"></div>';
-}
 
 function interview_add_instance($interview) {
 	global $CFG, $DB;
 	$interview->timemodified = time();
 
+	echo "Should be in interview_update_instance but am in  interview_add_instance";
 	// Insert a relationship in the interview table and return the identifier
 	// If inserted correctly, create a relationship corresponding in the table
 	// interview_slots
@@ -57,15 +41,9 @@ function interview_add_instance($interview) {
 	//return the id of the interview
 	return $interview->id;
 }
-
-/**
- * Given an object containing all the necessary data,
- * (defined by the formula in mod.html) this function
- * Makes an existing instance with new data
- */
-
 function interview_update_instance($interview) {
 	global $DB;
+	echo "in  interview_update_instance";
 	// Create a new object
 	$opt = new object();
 	$opt->timemodified = time();
@@ -88,7 +66,7 @@ function interview_update_instance($interview) {
 
 	// If a description has been established, assign it
 	if (isset($interview->intro)) {
-		$opt->intro = $interview->intro;
+		$opt->intro = $interview->intro .  "in  interview_update_instance";
 	}
 
 	return $DB->update_record('interview', $opt);
@@ -127,6 +105,31 @@ function interview_delete_instance($id) {
 	return $result;
 }
 
+/**
+ * This php document contains all the functions
+ * necessary for the correct execution of the model
+ */
+
+
+
+
+function view_header($interview, $course, $cm) {
+	global $CFG, $PAGE, $OUTPUT;
+	$PAGE->set_url('/mod/interview/view.php', array('id' => $cm->id));
+	$strinterviews = get_string('modulenameplural', 'interview');
+	$PAGE->set_title(format_string($interview->name));
+	$PAGE->set_heading("<a href=\"index.php?id=$course->id\">$strinterviews</a> -> " . format_string($interview->name));
+
+	echo $OUTPUT->header();
+
+	groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/inteview/view.php?id=' . $cm->id);
+
+	echo '<div class="clearer"></div>';
+}
+
+
+
+
 function select($course, $cm) {
 
 	global $USER, $DB;
@@ -135,7 +138,7 @@ function select($course, $cm) {
 	$id = required_param('id', PARAM_INT);
 	$interviewid = required_param('interviewid', PARAM_INT);
 	$slotid = required_param('slotid', PARAM_INT);
-
+	$context = get_context_instance(CONTEXT_MODULE, $cm->id);
 	// checks the errors
 
 	// If it hasn't selected a temporary string it informs you of that
@@ -218,7 +221,7 @@ function assign($course, $cm) {
 		}
 
 		// It's used to control the recent activity performed by the user
-		add_to_log($course->id, "assignslot", "view", "view.php?id=$cm->id", "$interview->id");
+		add_to_log($course->id, "assignslot", "view", "view.php?id=$cm->id", "$id");
 	}
 }
 
@@ -234,7 +237,7 @@ function hideslot($course, $cm, $interview) {
 
 	//free the slot if it has already been selcted
 	if ($slot->student == null) {
-		$stot->student = null;
+		$slot->student = null;
 	}
 	//hide the slot
 	$slot->available = false;
@@ -293,7 +296,7 @@ function release($course, $cm) {
 		}
 
 		// Controls the recent activity done by the users
-		add_to_log($course->id, "interview", "release", "view.php?id=$cm->id", $interview->id, $cm->id);
+		add_to_log($course->id, "interview", "release", "view.php?id=$cm->id", $id, $cm->id);
 
 	}
 }
@@ -301,12 +304,13 @@ function release($course, $cm) {
 function freeslot($course, $cm) {
 	global $DB;
 	// Picks up the necessary parameters
+	$id = required_param('id', PARAM_INT);
 	$slotid = required_param('slotid', PARAM_INT);
 
-	//It frees the selected string, eliminating
+	//It frees the selected slot, eliminating
 	// the user that it compiles and leaves it free
 	// to be selected by another user
-	$slot->id = $slotid;
+	$slot = $DB->get_record('interview_slots', array('id' => $slotid));
 	$slot->student = 0;
 	$slot->timemodified = time();
 
@@ -319,7 +323,7 @@ function freeslot($course, $cm) {
 	}
 
 	// Controls the recent activity done by the users
-	add_to_log($course->id, "interview", "freeslot", "view.php?id=$cm->id", $interview->id, $cm->id);
+	add_to_log($course->id, "interview", "freeslot", "view.php?id=$cm->id", $id, $cm->id);
 }
 
 

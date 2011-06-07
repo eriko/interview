@@ -144,12 +144,12 @@ view_header($interview, $course, $cm);
 
 $context = get_context_instance(CONTEXT_MODULE, $cm->id);
 
-if (has_capability('mod/interview:manage', $context, $USER->id)) {
+/*if (has_capability('mod/interview:manage', $context, $USER->id)) {
 	echo '<H2>Is faculty</H2>';
 }
 elseif (has_capability('mod/interview:choose', $context, $USER->id)) {
 	echo '<H2>Is student</H2>';
-}
+}*/
 
 //should be has role faculty
 if (has_capability('mod/interview:manage', get_context_instance(CONTEXT_COURSE, $course->id), $USER->id)) {
@@ -174,26 +174,6 @@ if (has_capability('mod/interview:manage', get_context_instance(CONTEXT_COURSE, 
 	echo '<center>';
 	echo html_writer::table($fac_slots_table);
 	echo '</center>';
-
-	// Provides links to download the calculation pages
-	echo "<br />\n";
-	echo "<table class=\"downloadreport\" align=\"center\"><tr>\n";
-	echo "<td>";
-	$options = array();
-	$options["id"] = "$cm->id";
-	$options["download"] = "ods";
-	$url = new moodle_url("report.php");
-	$url->param("id" ,"$cm->id");
-	$url->param("download", "ods");
-	echo $OUTPUT->single_button($url, get_string('downloadods'), 'post', $options);
-	echo "</td><td>";
-	$url->param("download",  "xls");
-	echo $OUTPUT->single_button($url, get_string('downloadexcel'), 'post', $options);
-	echo "</td><td>";
-	$url->param("download",  "txt");
-	echo $OUTPUT->single_button($url, get_string('downloadtext'), 'post', $options);
-	echo "</td></tr></table>";
-	echo '<br /><br />';
 
 
 	/************** TABLE 2 **************/
@@ -232,7 +212,7 @@ if (has_capability('mod/interview:manage', get_context_instance(CONTEXT_COURSE, 
 	}
 
  	//if ($stu_own_slot = null) {
-	$stu_slots_table = build_stu_slots_table($interview, $cm);
+	$stu_slots_table = $output->build_stu_slots_table($interview, $cm);
 	echo '<center>';
 	echo html_writer::table($stu_slots_table);
 	echo '</center>';
