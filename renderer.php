@@ -76,6 +76,9 @@ function build_stu_slots_table($interview, $cm) {
 		if ($slot->student != 0) {
 			continue;
 		}
+		if (!$slot->available){
+			continue;
+		}
 		$row = array();
 		// defines the form that shows the date of the session
 		$row["starttime"] = userdate($slot->start, get_string('strftimetime'));
