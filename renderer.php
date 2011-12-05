@@ -83,7 +83,7 @@ function build_stu_slots_table($interview, $cm) {
 		// defines the form that shows the date of the session
 		$row["starttime"] = userdate($slot->start, get_string('strftimetime'));
 		$row["endtime"] = userdate($slot->ending, get_string('strftimetime'));
-		$row["startdate"] = userdate($interview->timeopen, get_string('strftimedateshort'));
+		$row["startdate"] = userdate($slot->start, get_string('strftimedateshort'));
 
 		// establishes the link for the action
 		$actions = '<span style="font-size: x-small;">';
