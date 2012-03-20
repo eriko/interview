@@ -6,7 +6,7 @@
  */
 
 
-$module->version  = 2011093000;  // Versión actual del módulo (Fecha: AAAAMMDDXX)
+$module->version  = 2012011000;  // Versión actual del módulo (Fecha: AAAAMMDDXX)
 $module->cron     = 0;           // Periodo para que cron chequee este módulo (segs)
 
 ?>
